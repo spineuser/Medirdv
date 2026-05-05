@@ -24,6 +24,9 @@ export class Appointment {
   @Column()
   reason: string;
 
+  @Column({ nullable: true })
+  patientName: string;
+
   @Column({ default: 'pending' })
   status: string;
 

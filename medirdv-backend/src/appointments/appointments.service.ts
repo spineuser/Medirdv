@@ -10,21 +10,36 @@ export class AppointmentsService {
     private repo: Repository<Appointment>,
   ) {}
 
-  create(data: any) {
-  if (!data?.doctorId || !data?.patientId || !data?.date) {
-    throw new Error("Missing required fields");
+  async create(data: any) {
+    if (!data?.doctorId || !data?.patientId || !data?.date) {
+      throw new Error("Missing required fields");
+    }
+
+    const requestedDate = new Date(data.date);
+
+    // Check for existing appointment for the same doctor at the same time
+    const existing = await this.repo.findOne({
+      where: {
+        doctor: { id: Number(data.doctorId) },
+        date: requestedDate,
+      },
+    });
+
+    if (existing) {
+      throw new Error("This slot is already booked for this doctor.");
+    }
+
+    const appointment = this.repo.create({
+      patient: { id: Number(data.patientId) },
+      doctor: { id: Number(data.doctorId) },
+      date: requestedDate,
+      reason: data.reason || "",
+      patientName: data.patientName || "Anonymous Patient",
+      status: "pending",
+    });
+
+    return this.repo.save(appointment);
   }
-
-  const appointment = this.repo.create({
-    patient: { id: Number(data.patientId) },
-    doctor: { id: Number(data.doctorId) },
-    date: new Date(data.date),
-    reason: data.reason || "",
-    status: "pending",
-  });
-
-  return this.repo.save(appointment);
-}
 
 
   updateStatus(id: number, status: string) {

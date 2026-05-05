@@ -13,8 +13,6 @@ export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-  
-
   @Column()
   fullName: string;
 
@@ -28,5 +26,11 @@ export class User {
   password: string;
 
   @Column({ default: 'patient' })
-role: 'patient' | 'doctor' | 'admin';
+  role: 'patient' | 'doctor' | 'admin';
+
+  @Column({ nullable: true })
+  specialty: string;
+
+  @Column({ default: 'male' })
+  gender: 'male' | 'female';
 }

@@ -99,8 +99,16 @@ export const GlobalStyles = createGlobalStyle`
   .Cloud:nth-child(9) { animation-delay: -55s; top: 85%; animation-duration: 85s; }
   .Cloud:nth-child(10) { animation-delay: -65s; top: 95%; animation-duration: 90s; }
 
-  /* Universal cursor hide for all elements */
-  *, *::before, *::after {
+  /* Universal cursor hide for all elements and scrollbars */
+  *, *::before, *::after, html, body, button, input, select, textarea, a, label {
+    cursor: none !important;
+  }
+
+  ::-webkit-scrollbar,
+  ::-webkit-scrollbar-track,
+  ::-webkit-scrollbar-thumb,
+  ::-webkit-scrollbar-button,
+  ::-webkit-scrollbar-corner {
     cursor: none !important;
   }
 
@@ -122,7 +130,7 @@ export const GlobalStyles = createGlobalStyle`
     width: 40px; height: 40px;
     pointer-events: none;
     z-index: 99999;
-    transform: translate(-50%, -50%);
+    transform: translate(-10%, -90%); /* Hotspot at the needle tip (bottom-left of SVG) */
     transition: transform 0.08s linear;
   }
   

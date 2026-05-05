@@ -68,7 +68,7 @@ function App() {
   const renderPage = () => {
     if (page === "home") return <Home goLogin={() => setPage("login")} goLanding={() => setPage("landing")} />;
     if (page === "landing") return <Landing onLogin={() => setPage("login")} />;
-    if (page === "login") return <Login onLogin={() => setPage("dashboard")} />;
+    if (page === "login") return <Login onLogin={() => setPage("dashboard")} onBack={() => setPage("home")} />;
     if (page === "dashboard") return <Dashboard onLogout={() => setPage("home")} />;
     return null;
   };

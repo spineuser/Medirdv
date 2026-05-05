@@ -40,7 +40,15 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    let isPasswordValid = await bcrypt.compare(password, user.password);
+
+    // Fallback for legacy plain-text passwords (doctors created before the fix)
+    if (!isPasswordValid && password === user.password) {
+      isPasswordValid = true;
+      // Auto-migrate to hashed password
+      const hashed = await bcrypt.hash(password, 10);
+      await this.usersService.update(user.id, { password: hashed });
+    }
 
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
@@ -54,6 +62,12 @@ export class AuthService {
 
     return {
       access_token: token,
+      user: {
+        id: user.id,
+        email: user.email,
+        fullName: user.fullName,
+        role: user.role,
+      },
     };
   }
 }

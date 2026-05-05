@@ -6,6 +6,8 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 
 
+import * as bcrypt from 'bcrypt';
+
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -13,6 +15,13 @@ export class UsersController {
   @Post()
   @Roles(UserRole.ADMIN)
   async create(@Body() createUserDto: Partial<User>) {
+    if (createUserDto.password) {
+      createUserDto.password = await bcrypt.hash(createUserDto.password, 10);
+    }
+    // Default to doctor if created via admin dashboard
+    if (!createUserDto.role) {
+      createUserDto.role = 'doctor' as any;
+    }
     return this.usersService.create(createUserDto);
   }
 

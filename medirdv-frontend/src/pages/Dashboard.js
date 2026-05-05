@@ -59,7 +59,8 @@ export default function Dashboard({ onLogout }) {
   const [currentPatientIndex, setCurrentPatientIndex] = useState(0);
   const [notification, setNotification] = useState("");
   const [role] = useState(localStorage.getItem('role') || 'doctor');
-  const [newDoc, setNewDoc] = useState({ email: '', fullName: '', password: '' });
+  const [userName] = useState(localStorage.getItem('userName') || 'Medical Professional');
+  const [newDoc, setNewDoc] = useState({ email: '', fullName: '', password: '', specialty: '', gender: 'male' });
 
   useEffect(() => {
     loadData();
@@ -67,7 +68,14 @@ export default function Dashboard({ onLogout }) {
 
   const loadData = async () => {
     const [appts, docs] = await Promise.all([getAppointments(), getDoctors()]);
-    setAppointments(appts || []);
+    
+    // Filter appointments for doctors - only show their own
+    let filteredAppts = appts || [];
+    if (role === 'doctor') {
+      filteredAppts = filteredAppts.filter(a => a.doctor?.fullName === userName || a.doctorId === userName);
+    }
+    
+    setAppointments(filteredAppts);
     setDoctors(docs || []);
   };
 
@@ -90,7 +98,7 @@ export default function Dashboard({ onLogout }) {
     try {
       await createDoctor(newDoc);
       showNotification("New doctor added successfully!");
-      setNewDoc({ email: '', fullName: '', password: '' });
+      setNewDoc({ email: '', fullName: '', password: '', specialty: '', gender: 'male' });
       loadData();
     } catch (err) {
       alert("Failed to add doctor.");
@@ -110,28 +118,24 @@ export default function Dashboard({ onLogout }) {
             <i className="fas fa-tachometer-alt"></i>
             <span>Dashboard</span>
           </NavItem>
-          {role === 'admin' && (
-            <NavItem $active={activeView === "doctors"} onClick={() => setActiveView("doctors")}>
-              <i className="fas fa-user-md"></i>
-              <span>Manage Doctors</span>
-            </NavItem>
-          )}
-          <NavItem $active={activeView === "calendar"} onClick={() => setActiveView("calendar")}>
-            <i className="fas fa-calendar-alt"></i>
-            <span>Schedule</span>
-          </NavItem>
           <NavItem $active={activeView === "patients"} onClick={() => setActiveView("patients")}>
             <i className="fas fa-users"></i>
             <span>Patients</span>
           </NavItem>
+          {role === 'admin' && (
+            <NavItem $active={activeView === "doctors"} onClick={() => setActiveView("doctors")}>
+              <i className="fas fa-user-plus"></i>
+              <span>Add Doctors</span>
+            </NavItem>
+          )}
         </nav>
 
         <SidebarFooter>
           <UserRow>
-            <Avatar size="sm">DR<OnlineDot /></Avatar>
+            <Avatar size="sm">{userName.substring(0, 2).toUpperCase()}<OnlineDot /></Avatar>
             <UserInfo>
-              <UserName>Dr. Sarah Connor</UserName>
-              <UserRole>Administrator</UserRole>
+              <UserName>{userName}</UserName>
+              <UserRole>{role === 'admin' ? 'Administrator' : 'Medical Staff'}</UserRole>
             </UserInfo>
           </UserRow>
         </SidebarFooter>
@@ -140,7 +144,9 @@ export default function Dashboard({ onLogout }) {
       <ContentArea>
         <Topbar>
           <TopbarTitle>
-            <div style={{ textTransform: 'capitalize' }}>{activeView}</div>
+            <div style={{ textTransform: 'capitalize' }}>
+              {activeView === "dashboard" ? (role === 'doctor' ? "Appointments" : "Dashboard") : activeView}
+            </div>
             <p style={{ fontSize: '12px', color: '#6B6560', marginTop: '4px', fontWeight: 400 }}>
               {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
             </p>
@@ -266,6 +272,35 @@ export default function Dashboard({ onLogout }) {
                       style={{ padding: '12px', border: '1px solid #ddd', background: 'rgba(255,255,255,0.5)', outline: 'none' }}
                     />
                   </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <label style={{ fontSize: '11px', opacity: 0.6, textTransform: 'uppercase', fontFamily: 'DM Mono' }}>Department / Specialty</label>
+                    <select 
+                      required 
+                      value={newDoc.specialty}
+                      onChange={e => setNewDoc({...newDoc, specialty: e.target.value})}
+                      style={{ padding: '12px', border: '1px solid #ddd', background: 'rgba(255,255,255,0.5)', outline: 'none', cursor: 'pointer' }}
+                    >
+                      <option value="">Select Department</option>
+                      <option value="Neurology">Neurology</option>
+                      <option value="Psychiatry">Psychiatry</option>
+                      <option value="Pediatrics">Pediatrics</option>
+                      <option value="Cardiology">Cardiology</option>
+                      <option value="Orthopedics">Orthopedics</option>
+                      <option value="Dermatology">Dermatology</option>
+                    </select>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <label style={{ fontSize: '11px', opacity: 0.6, textTransform: 'uppercase', fontFamily: 'DM Mono' }}>Gender</label>
+                    <select 
+                      required 
+                      value={newDoc.gender}
+                      onChange={e => setNewDoc({...newDoc, gender: e.target.value})}
+                      style={{ padding: '12px', border: '1px solid #ddd', background: 'rgba(255,255,255,0.5)', outline: 'none', cursor: 'pointer' }}
+                    >
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                    </select>
+                  </div>
                   <Button type="submit" style={{ marginTop: 'auto' }}>
                     <span>Register Doctor</span>
                   </Button>
@@ -279,9 +314,38 @@ export default function Dashboard({ onLogout }) {
                 {doctors.map(doc => (
                   <StatCard key={doc.id}>
                     <StatNumber style={{ fontSize: '18px' }}>Dr. {doc.fullName}</StatNumber>
+                    <StatLabel style={{ color: '#0047FF', fontWeight: 600 }}>{doc.specialty || 'General Practitioner'}</StatLabel>
                     <StatLabel>{doc.email}</StatLabel>
                   </StatCard>
                 ))}
+              </StatsGrid>
+            </div>
+          </DashboardContainer>
+        )}
+
+        {activeView === "patients" && (
+          <DashboardContainer>
+            <SectionLabel>Medical Records</SectionLabel>
+            <div style={{ marginTop: '2rem' }}>
+              <SectionLabel>Scheduled Patients</SectionLabel>
+              <StatsGrid>
+                {Array.from(new Set(appointments.map(a => a.patientId))).map(pId => {
+                  const patientAppts = appointments.filter(a => a.patientId === pId);
+                  return (
+                    <StatCard key={pId}>
+                      <StatNumber style={{ fontSize: '20px' }}>Patient #{pId || "N/A"}</StatNumber>
+                      <StatLabel>Total Appointments: {patientAppts.length}</StatLabel>
+                      <div style={{ marginTop: '1rem', fontSize: '11px', opacity: 0.6 }}>
+                        Latest Reason: {patientAppts[0]?.reason || "Checkup"}
+                      </div>
+                    </StatCard>
+                  );
+                })}
+                {appointments.length === 0 && (
+                  <div style={{ padding: '2rem', textAlign: 'center', gridColumn: '1 / -1' }}>
+                    <p style={{ opacity: 0.5, fontStyle: 'italic' }}>No patients currently scheduled for your profile.</p>
+                  </div>
+                )}
               </StatsGrid>
             </div>
           </DashboardContainer>

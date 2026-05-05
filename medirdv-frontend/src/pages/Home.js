@@ -158,39 +158,83 @@ const SectionLabel = styled.div`
 `;
 
 const SpecialistsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1px;
-  background: ${({ theme }) => theme.colors.border.line};
-  border: 1px solid ${({ theme }) => theme.colors.border.line};
+  display: flex;
+  overflow-x: auto;
+  gap: 1.5rem;
+  padding: 1rem 0 3rem 0;
+  scrollbar-width: thin;
+  scrollbar-color: ${({ theme }) => theme.colors.primary[500]} transparent;
+  
+  &::-webkit-scrollbar {
+    display: none; /* Completely hide native scrollbar */
+  }
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  
   margin-top: ${({ theme }) => theme.spacing.xl};
 `;
 
+const CustomScrollContainer = styled.div`
+  width: 100%;
+  height: 4px;
+  background: rgba(0, 0, 0, 0.05);
+  margin-top: 2rem;
+  position: relative;
+  cursor: none !important;
+`;
+
+const CustomScrollThumb = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100px;
+  background: ${({ theme }) => theme.colors.primary[500]};
+  cursor: none !important;
+  transition: width 0.3s ease;
+`;
+
 const SpecialistCard = styled.div`
-  padding: ${({ theme }) => theme.spacing.xl};
-  background: ${({ $selected, theme }) => $selected ? 'rgba(0, 71, 255, 0.05)' : 'rgba(250, 247, 242, 0.8)'};
-  border: 1px solid ${({ $selected, theme }) => $selected ? theme.colors.primary[500] : 'transparent'};
-  backdrop-filter: blur(5px);
-  transition: all 0.3s ease;
+  flex: 0 0 320px;
+  padding: 2.5rem;
+  background: ${({ $selected, theme }) => $selected ? 'rgba(0, 71, 255, 0.05)' : 'rgba(255, 255, 255, 0.7)'};
+  border: 1px solid ${({ $selected, theme }) => $selected ? theme.colors.primary[500] : theme.colors.border.line};
+  backdrop-filter: blur(10px);
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
   cursor: none;
+  position: relative;
+  box-shadow: ${({ $selected }) => $selected ? '0 20px 40px rgba(0,71,255,0.08)' : 'none'};
 
   &:hover {
-    background: ${({ theme }) => theme.colors.primary.light};
+    background: #ffffff;
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.05);
+    border-color: ${({ theme }) => theme.colors.primary[500]};
   }
 `;
 
-const Avatar = styled.img`
+const Avatar = styled.div`
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  margin-bottom: ${({ theme }) => theme.spacing.md};
-  border: 1px solid ${({ theme }) => theme.colors.border.line};
-  padding: 4px;
+  margin-bottom: 2rem;
+  background: ${({ theme }) => theme.colors.primary[500]};
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: ${({ theme }) => theme.typography.fonts.display};
+  font-size: 32px;
+  font-weight: 700;
+  box-shadow: 0 10px 20px rgba(0, 71, 255, 0.2);
+  user-select: none;
+  cursor: none !important;
 `;
 
 const DoctorName = styled.h3`
-  font-size: 24px;
-  margin-bottom: 4px;
+  font-size: 26px;
+  margin-bottom: 8px;
+  color: ${({ theme }) => theme.colors.text.primary};
 `;
 
 const Specialty = styled.div`
@@ -208,13 +252,13 @@ const Button = styled.button`
   text-transform: uppercase;
   color: ${({ theme }) => theme.colors.background.paper};
   background: ${({ theme }) => theme.colors.background.charcoal};
-  padding: 14px 28px;
+  padding: 16px 32px;
   border: none;
   position: relative;
   overflow: hidden;
   width: ${props => props.fullWidth ? '100%' : 'auto'};
   margin-top: 1.5rem;
-  transition: color 0.3s ease;
+  transition: all 0.3s ease;
 
   &::before {
     content: '';
@@ -266,7 +310,6 @@ const Logo = styled.div`
   }
 `;
 
-// --- NEW BOOKING SECTION COMPONENTS ---
 const BookingWrapper = styled.section`
   padding: 8rem 0;
   border-top: 1px solid ${({ theme }) => theme.colors.border.line};
@@ -274,14 +317,14 @@ const BookingWrapper = styled.section`
 `;
 
 const ScheduleCard = styled.div`
-  background: rgba(250, 247, 242, 0.85);
+  background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(10px);
   border: 1px solid ${({ theme }) => theme.colors.border.line};
-  padding: 3rem;
-  max-width: 700px;
+  padding: 4rem;
+  max-width: 750px;
   margin: 4rem auto 0;
   text-align: center;
-  animation: fadeUp 1s ease both;
+  box-shadow: 0 40px 100px rgba(0,0,0,0.05);
 `;
 
 const InputGroup = styled.div`
@@ -295,20 +338,23 @@ const InputGroup = styled.div`
     text-transform: uppercase;
     color: ${({ theme }) => theme.colors.text.secondary};
     margin-bottom: 8px;
+    letter-spacing: 0.1em;
   }
   
   input, select {
     width: 100%;
-    background: rgba(255, 255, 255, 0.5);
+    background: #f9fafb;
     border: 1px solid ${({ theme }) => theme.colors.border.line};
-    padding: 12px;
+    padding: 14px;
     font-family: ${({ theme }) => theme.typography.fonts.mono};
     font-size: 14px;
     color: ${({ theme }) => theme.colors.text.primary};
     outline: none;
+    transition: all 0.2s;
     
     &:focus {
       border-color: ${({ theme }) => theme.colors.primary[500]};
+      background: #ffffff;
     }
   }
 `;
@@ -323,7 +369,7 @@ const TimeGrid = styled.div`
 `;
 
 const TimeSlot = styled.button`
-  background: ${({ $selected, theme }) => $selected ? theme.colors.primary[500] : 'rgba(250, 247, 242, 0.9)'};
+  background: ${({ $selected, theme }) => $selected ? theme.colors.primary[500] : 'rgba(255, 255, 255, 0.9)'};
   color: ${({ $selected, theme }) => $selected ? theme.colors.background.paper : theme.colors.text.primary};
   font-family: ${({ theme }) => theme.typography.fonts.mono};
   font-size: 13px;
@@ -337,22 +383,62 @@ const TimeSlot = styled.button`
   }
 `;
 
-const PlainSection = styled.section`
-  padding: 8rem 0;
-  background: transparent;
-`;
-
 export default function Home({ goLogin }) {
   const [doctors, setDoctors] = useState([]);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [selectedTime, setSelectedTime] = useState(null);
   const [checkupReason, setCheckupReason] = useState("");
+  const [patientName, setPatientName] = useState("");
   const [bookingDate, setBookingDate] = useState("");
+  const gridRef = useRef(null);
+  const [scrollProgress, setScrollProgress] = useState(0);
   
   const timeSlots = ['09:00 AM', '10:30 AM', '01:00 PM', '02:30 PM', '04:00 PM', '05:15 PM'];
+  
+  const handleScroll = () => {
+    if (gridRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = gridRef.current;
+      const progress = (scrollLeft / (scrollWidth - clientWidth)) * 100;
+      setScrollProgress(progress);
+    }
+  };
+
+  const handleScrollbarDrag = (e) => {
+    if (!gridRef.current) return;
+    const { scrollWidth, clientWidth } = gridRef.current;
+    const container = e.currentTarget.getBoundingClientRect();
+    const clickPos = (e.clientX - container.left) / container.width;
+    gridRef.current.scrollLeft = clickPos * (scrollWidth - clientWidth);
+  };
+
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+
+  const startDragging = (e) => {
+    setIsDragging(true);
+    setStartX(e.pageX - gridRef.current.offsetLeft);
+    setScrollLeft(gridRef.current.scrollLeft);
+  };
+
+  const stopDragging = () => {
+    setIsDragging(false);
+  };
+
+  const moveDragging = (e) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    const x = e.pageX - gridRef.current.offsetLeft;
+    const walk = (x - startX) * 2; // scroll-fast
+    gridRef.current.scrollLeft = scrollLeft - walk;
+  };
 
   useEffect(() => {
-    getDoctors().then(setDoctors).catch(console.error);
+    getDoctors().then(data => {
+      // Filter out the placeholder "Doctor" account
+      const filtered = data.filter(d => d.fullName.toLowerCase() !== "doctor" && !d.fullName.toLowerCase().includes("test"));
+      setDoctors(filtered);
+    }).catch(console.error);
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -372,34 +458,29 @@ export default function Home({ goLogin }) {
   }, []);
 
   const handleBookingSubmit = async () => {
-    if (!selectedDoctor || !selectedTime || !checkupReason || !bookingDate) {
-      alert("Please fill in all booking details.");
+    if (!selectedDoctor || !selectedTime || !checkupReason || !bookingDate || !patientName) {
+      alert("Please fill in all booking details including your full name.");
       return;
     }
     
-    // Check for login
-    const token = localStorage.getItem('token');
-    if (!token) {
-      alert("Please login as a patient to confirm your booking.");
-      goLogin();
-      return;
-    }
-
     try {
       await createAppointment({
         doctorId: selectedDoctor.id,
+        patientId: 1, 
         reason: checkupReason,
+        patientName: patientName,
         date: bookingDate,
         time: selectedTime
       });
       alert("Appointment requested! Dr. " + selectedDoctor.fullName + " will review it.");
-      // Reset
       setSelectedDoctor(null);
       setSelectedTime(null);
       setCheckupReason("");
+      setPatientName("");
       setBookingDate("");
     } catch (err) {
-      alert("Failed to book appointment. Please try again.");
+      const errorMsg = err.response?.data?.message || "Failed to book appointment. This slot might be taken.";
+      alert(errorMsg);
     }
   };
 
@@ -463,34 +544,71 @@ export default function Home({ goLogin }) {
       </MarqueeContainer>
 
       <BookingWrapper id="booking-section">
-        <SectionLabel className="reveal">Select Your Path</SectionLabel>
+        <SectionLabel className="reveal">Select Your Specialist</SectionLabel>
         <h2 className="reveal" style={{ fontSize: 'clamp(32px, 4vw, 56px)', maxWidth: '800px' }}>
           Expert care, <span className="serif-word">without the waiting room.</span>
         </h2>
-        <p className="reveal" style={{ marginTop: '1.5rem', maxWidth: '500px' }}>
-          Select a specialist from our vetted network and secure your consultation instantly. We prioritize your health and your time.
-        </p>
+        
+        <SpecialistsGrid 
+          className="reveal" 
+          ref={gridRef} 
+          onScroll={handleScroll}
+          onMouseDown={startDragging}
+          onMouseLeave={stopDragging}
+          onMouseUp={stopDragging}
+          onMouseMove={moveDragging}
+          style={{ cursor: 'none !important' }}
+        >
+          {doctors.map((doc) => {
+            const cleanName = doc.fullName.replace(/^Dr\.\s*/i, '');
 
-        <SpecialistsGrid className="reveal">
-          {doctors.slice(0, 4).map((doc) => (
-            <SpecialistCard 
-              key={doc.id} 
-              $selected={selectedDoctor?.id === doc.id}
-              onClick={() => setSelectedDoctor(doc)}
-            >
-              <Specialty>Senior Specialist</Specialty>
-              <DoctorName>Dr. {doc.fullName}</DoctorName>
-              <p style={{ marginTop: '1rem', fontSize: '12px' }}>
-                Dedicated to providing patient-centered care with over 12 years of clinical experience.
-              </p>
-            </SpecialistCard>
-          ))}
+            return (
+              <SpecialistCard 
+                key={doc.id} 
+                $selected={selectedDoctor?.id === doc.id}
+                onClick={() => setSelectedDoctor(doc)}
+              >
+                <Avatar>
+                  {cleanName.charAt(0).toUpperCase()}
+                </Avatar>
+                <Specialty>Senior Specialist</Specialty>
+                <DoctorName>Dr. {cleanName}</DoctorName>
+                <Specialty style={{ color: '#0047FF', marginTop: '4px' }}>{doc.specialty || 'General Practitioner'}</Specialty>
+                <p style={{ marginTop: '1.2rem', fontSize: '12px', lineHeight: '1.6' }}>
+                  Providing elite medical consultation and personalized treatment plans for every patient.
+                </p>
+              </SpecialistCard>
+            );
+          })}
         </SpecialistsGrid>
 
+        <CustomScrollContainer 
+          className="reveal" 
+          onMouseDown={handleScrollbarDrag}
+          onMouseMove={(e) => e.buttons === 1 && handleScrollbarDrag(e)}
+        >
+          <CustomScrollThumb style={{ 
+            left: `${scrollProgress}%`, 
+            transform: `translateX(-${scrollProgress}%)`,
+            width: doctors.length > 0 ? `${(1 / doctors.length) * 100}%` : '100px'
+          }} />
+        </CustomScrollContainer>
+
         <ScheduleCard className="reveal">
-          <h3 style={{ fontSize: '24px', marginBottom: '8px' }}>Schedule your visit</h3>
+          <h3 style={{ fontSize: '28px', marginBottom: '8px' }}>Schedule your visit</h3>
+          <p style={{ opacity: 0.6, fontSize: '13px', marginBottom: '3rem' }}>Fill in your details to secure your priority consultation slot.</p>
           
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginTop: '2rem' }}>
+          <InputGroup>
+            <label>Patient Full Name</label>
+            <input 
+              type="text" 
+              placeholder="Enter your legal full name" 
+              value={patientName}
+              onChange={(e) => setPatientName(e.target.value)}
+            />
+          </InputGroup>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
             <InputGroup>
               <label>Reason for Visit</label>
               <input 
@@ -533,31 +651,14 @@ export default function Home({ goLogin }) {
             <span>
               {!selectedDoctor ? 'Select a Doctor above' : 
                !selectedTime ? 'Select a Time Slot' : 
-               `Book with Dr. ${selectedDoctor.fullName}`}
+               `Confirm Booking with Dr. ${selectedDoctor.fullName.replace(/^Dr\.\s*/i, '')}`}
             </span>
           </Button>
         </ScheduleCard>
       </BookingWrapper>
 
-      <PlainSection>
-        <SectionLabel className="reveal">Our Vetted Network</SectionLabel>
-        <h2 className="reveal" style={{ fontSize: 'clamp(32px, 4vw, 56px)' }}>
-          Expertise you can <span className="serif-word">trust</span>.
-        </h2>
-        
-        <div className="reveal" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '2rem', marginTop: '4rem' }}>
-          {doctors.slice(0, 6).map((doc) => (
-            <div key={doc.id} style={{ textAlign: 'center' }}>
-              <Avatar src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${doc.fullName}`} alt={doc.fullName} />
-              <DoctorName style={{ fontSize: '18px' }}>Dr. {doc.fullName}</DoctorName>
-              <Specialty>Specialist</Specialty>
-            </div>
-          ))}
-        </div>
-      </PlainSection>
-
       <footer style={{ padding: '4rem 0', borderTop: '1px solid rgba(26,24,20,0.12)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <p style={{ fontSize: '12px' }}>© 2025 MediRDV. Premium Medical Solutions.</p>
+        <p style={{ fontSize: '12px' }}>© 2026 MediRDV. Premium Medical Solutions.</p>
         <Logo>Medi<span>RDV.</span></Logo>
         <p style={{ fontSize: '12px' }}>Built for Excellence.</p>
       </footer>
