@@ -6,6 +6,7 @@ import { ThemeProvider } from 'styled-components';
 import { theme } from './theme';
 import { GlobalStyles } from './GlobalStyles';
 import Landing from './pages/Landing';
+import Intro from "./pages/Intro";
 
 const Cursor = () => {
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -64,6 +65,7 @@ const Cursor = () => {
 
 function App() {
   const [page, setPage] = useState("home");
+  const [showIntro, setShowIntro] = useState(true);
 
   const renderPage = () => {
     if (page === "home") return <Home goLogin={() => setPage("login")} goLanding={() => setPage("landing")} />;
@@ -76,22 +78,28 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <GlobalStyles />
-      <Cursor />
-      <div id="Clouds">
-        <div className="Cloud Foreground"></div>
-        <div className="Cloud Background"></div>
-        <div className="Cloud Foreground"></div>
-        <div className="Cloud Background"></div>
-        <div className="Cloud Foreground"></div>
-        <div className="Cloud Background"></div>
-        <div className="Cloud Background"></div>
-        <div className="Cloud Foreground"></div>
-        <div className="Cloud Background"></div>
-        <div className="Cloud Background"></div>
-      </div>
-      <div style={{ position: 'relative', zIndex: 2 }}>
-        {renderPage()}
-      </div>
+      {showIntro ? (
+        <Intro onComplete={() => setShowIntro(false)} />
+      ) : (
+        <>
+          <Cursor />
+          <div id="Clouds">
+            <div className="Cloud Foreground"></div>
+            <div className="Cloud Background"></div>
+            <div className="Cloud Foreground"></div>
+            <div className="Cloud Background"></div>
+            <div className="Cloud Foreground"></div>
+            <div className="Cloud Background"></div>
+            <div className="Cloud Background"></div>
+            <div className="Cloud Foreground"></div>
+            <div className="Cloud Background"></div>
+            <div className="Cloud Background"></div>
+          </div>
+          <div style={{ position: 'relative', zIndex: 2 }}>
+            {renderPage()}
+          </div>
+        </>
+      )}
     </ThemeProvider>
   );
 }
