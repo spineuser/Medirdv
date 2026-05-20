@@ -59,11 +59,18 @@ export default function Landing() {
 
       {/* DOCTORS */}
       <DoctorGrid>
-        {[1,2,3,4,5,6].map((_, i) => (
+        {[
+          { name: 'Dr. Lamyaa', spec: 'Neurology' },
+          { name: 'Dr. Abdelkarim', spec: 'Psychiatry' },
+          { name: 'Dr. Rachid', spec: 'Pediatrics' },
+          { name: 'Dr. Aabir', spec: 'Cardiology' },
+          { name: 'Dr. Omar', spec: 'Orthopedics' },
+          { name: 'Dr. Karim', spec: 'Dermatology' }
+        ].map((doc, i) => (
           <DoctorCard key={i}>
-            <Avatar size="md">D</Avatar>
-            <DoctorName>Dr. John Doe</DoctorName>
-            <DoctorSpecialty>Cardiologist</DoctorSpecialty>
+            <Avatar size="md">{doc.name.charAt(4)}</Avatar>
+            <DoctorName>{doc.name}</DoctorName>
+            <DoctorSpecialty>{doc.spec}</DoctorSpecialty>
           </DoctorCard>
         ))}
       </DoctorGrid>

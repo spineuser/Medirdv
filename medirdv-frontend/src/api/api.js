@@ -56,3 +56,12 @@ export const createDoctor = async (data) => {
   });
   return res.json();
 };
+
+export const cancelAppointment = async (id) => {
+  const res = await fetch(`${API}/appointments/${id}/status`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status: "cancelled" }),
+  });
+  return res.json();
+};

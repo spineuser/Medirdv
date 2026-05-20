@@ -26,6 +26,11 @@ import { Badge } from '../components/ui/Badge';
 import { LogButton } from "../components/ui/LogButton";
 import styled from "styled-components";
 
+const formatDrName = (name) => {
+  if (!name) return "";
+  return name.startsWith("Dr.") ? name : `Dr. ${name}`;
+};
+
 const MainLayout = styled.div`
   display: flex;
   min-height: 100vh;
@@ -134,7 +139,7 @@ export default function Dashboard({ onLogout }) {
           <UserRow>
             <Avatar size="sm">{userName.substring(0, 2).toUpperCase()}<OnlineDot /></Avatar>
             <UserInfo>
-              <UserName>{userName}</UserName>
+              <UserName>{formatDrName(userName)}</UserName>
               <UserRole>{role === 'admin' ? 'Administrator' : 'Medical Staff'}</UserRole>
             </UserInfo>
           </UserRow>
@@ -197,9 +202,9 @@ export default function Dashboard({ onLogout }) {
                         {currentPatient.id}
                       </div>
                       <div>
-                        <h2 style={{ fontSize: '28px', marginBottom: '8px' }}>Patient #{currentPatient.patientId || "Unknown"}</h2>
+                        <h2 style={{ fontSize: '28px', marginBottom: '8px' }}>{currentPatient.patientName || `Patient #${currentPatient.patientId}` || "Unknown"}</h2>
                         <p style={{ fontSize: '14px' }}>Reason: {currentPatient.reason}</p>
-                        <p style={{ fontSize: '14px', marginTop: '4px' }}>Doctor: Dr. {currentPatient.doctor?.fullName || "Assigned"}</p>
+                        <p style={{ fontSize: '14px', marginTop: '4px' }}>Doctor: {formatDrName(currentPatient.doctor?.fullName || userName)}</p>
                         <Badge variant="success" style={{ marginTop: '1rem' }}>Active Session</Badge>
                       </div>
                     </div>
@@ -221,7 +226,7 @@ export default function Dashboard({ onLogout }) {
                         <AppointmentMonth>{new Date(appt.date).toLocaleString('default', { month: 'short' })}</AppointmentMonth>
                       </AppointmentDate>
                       <AppointmentInfo>
-                        <AppointmentDoctor>Turn #{appt.id}</AppointmentDoctor>
+                        <AppointmentDoctor>{appt.patientName || `Patient #${appt.patientId}`}</AppointmentDoctor>
                         <AppointmentDetail>{appt.reason}</AppointmentDetail>
                       </AppointmentInfo>
                       <AppointmentActions>
@@ -232,6 +237,43 @@ export default function Dashboard({ onLogout }) {
                 </AppointmentList>
               </div>
             </div>
+
+            {role === 'admin' && (
+              <div style={{ marginTop: '4rem' }}>
+                <SectionLabel>Global Appointment Statistics</SectionLabel>
+                <StatsGrid>
+                  {doctors.map(doc => {
+                    const count = appointments.filter(a => a.doctor?.id === doc.id).length;
+                    return (
+                      <StatCard key={doc.id}>
+                        <StatNumber>{count}</StatNumber>
+                        <StatLabel>{formatDrName(doc.fullName)}</StatLabel>
+                        <StatLabel style={{ fontSize: '10px', opacity: 0.5 }}>{doc.specialty}</StatLabel>
+                      </StatCard>
+                    );
+                  })}
+                </StatsGrid>
+                
+                <SectionLabel>All Patient Appointments</SectionLabel>
+                <AppointmentList>
+                  {appointments.map(appt => (
+                    <AppointmentRow key={appt.id}>
+                      <AppointmentDate>
+                        <AppointmentDay>{new Date(appt.date).getDate()}</AppointmentDay>
+                        <AppointmentMonth>{new Date(appt.date).toLocaleString('default', { month: 'short' })}</AppointmentMonth>
+                      </AppointmentDate>
+                      <AppointmentInfo>
+                        <AppointmentDoctor>{appt.patientName || `Patient #${appt.patientId}`}</AppointmentDoctor>
+                        <AppointmentDetail>With {formatDrName(appt.doctor?.fullName)} • {appt.reason}</AppointmentDetail>
+                      </AppointmentInfo>
+                      <AppointmentActions>
+                        <Badge variant={appt.status === 'cancelled' ? 'danger' : 'success'}>{appt.status}</Badge>
+                      </AppointmentActions>
+                    </AppointmentRow>
+                  ))}
+                </AppointmentList>
+              </div>
+            )}
           </DashboardContainer>
         )}
 
@@ -313,7 +355,7 @@ export default function Dashboard({ onLogout }) {
               <StatsGrid>
                 {doctors.map(doc => (
                   <StatCard key={doc.id}>
-                    <StatNumber style={{ fontSize: '18px' }}>Dr. {doc.fullName}</StatNumber>
+                    <StatNumber style={{ fontSize: '18px' }}>{formatDrName(doc.fullName)}</StatNumber>
                     <StatLabel style={{ color: '#0047FF', fontWeight: 600 }}>{doc.specialty || 'General Practitioner'}</StatLabel>
                     <StatLabel>{doc.email}</StatLabel>
                   </StatCard>
@@ -333,7 +375,7 @@ export default function Dashboard({ onLogout }) {
                   const patientAppts = appointments.filter(a => a.patientId === pId);
                   return (
                     <StatCard key={pId}>
-                      <StatNumber style={{ fontSize: '20px' }}>Patient #{pId || "N/A"}</StatNumber>
+                      <StatNumber style={{ fontSize: '20px' }}>{patientAppts[0]?.patientName || `Patient #${pId}`}</StatNumber>
                       <StatLabel>Total Appointments: {patientAppts.length}</StatLabel>
                       <div style={{ marginTop: '1rem', fontSize: '11px', opacity: 0.6 }}>
                         Latest Reason: {patientAppts[0]?.reason || "Checkup"}

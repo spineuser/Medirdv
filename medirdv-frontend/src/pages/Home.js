@@ -1,7 +1,13 @@
 import { useEffect, useState, useRef } from "react";
-import { getDoctors, createAppointment } from "../api/api";
+import { getDoctors, createAppointment, getAppointments, cancelAppointment } from "../api/api";
 import styled from "styled-components";
 import { LogButton } from "../components/ui/LogButton";
+
+const formatDrName = (name) => {
+  if (!name) return "";
+  const clean = name.replace(/^Dr\.\s*/i, "");
+  return `Dr. ${clean}`;
+};
 
 const HomeContainer = styled.div`
   min-height: 100vh;
@@ -327,6 +333,75 @@ const ScheduleCard = styled.div`
   box-shadow: 0 40px 100px rgba(0,0,0,0.05);
 `;
 
+const AppointmentListWrapper = styled.div`
+  margin-top: 5rem;
+  max-width: 750px;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+`;
+
+const AppointmentItem = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2.5rem;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid ${({ theme }) => theme.colors.border.line};
+  margin-bottom: 1rem;
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  text-align: left;
+
+  &:hover {
+    background: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    border-color: ${({ theme }) => theme.colors.primary[500]};
+  }
+`;
+
+const ApptInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+`;
+
+const ApptDoctor = styled.h4`
+  font-family: ${({ theme }) => theme.typography.fonts.serif};
+  font-size: 20px;
+  color: ${({ theme }) => theme.colors.text.primary};
+  margin: 0;
+`;
+
+const ApptDetail = styled.div`
+  font-family: ${({ theme }) => theme.typography.fonts.mono};
+  font-size: 11px;
+  text-transform: uppercase;
+  color: ${({ theme }) => theme.colors.text.secondary};
+  letter-spacing: 0.1em;
+  display: flex;
+  gap: 1rem;
+`;
+
+const CancelButton = styled.button`
+  background: none;
+  border: 1px solid #ff4d4d;
+  color: #ff4d4d;
+  padding: 10px 20px;
+  font-family: ${({ theme }) => theme.typography.fonts.mono};
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: #ff4d4d;
+    color: #fff;
+  }
+`;
+
 const InputGroup = styled.div`
   text-align: left;
   margin-bottom: 1.5rem;
@@ -383,6 +458,62 @@ const TimeSlot = styled.button`
   }
 `;
 
+const CalendarContainer = styled.div`
+  margin-top: 1rem;
+  background: #fff;
+  border: 1px solid ${({ theme }) => theme.colors.border.line};
+  padding: 1.5rem;
+`;
+
+const CalendarHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  font-family: ${({ theme }) => theme.typography.fonts.mono};
+  font-size: 14px;
+  text-transform: uppercase;
+`;
+
+const CalendarGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+`;
+
+const DayLabel = styled.div`
+  font-size: 10px;
+  text-align: center;
+  opacity: 0.5;
+  margin-bottom: 5px;
+`;
+
+const CalendarDay = styled.button`
+  aspect-ratio: 1;
+  background: ${({ $status, $selected, theme }) => 
+    $selected ? theme.colors.primary[500] : 
+    $status === 'booked' ? '#FFD700' : 
+    $status === 'available' ? '#4CAF50' : 
+    '#f8f9fa'};
+  color: ${({ $selected, $status }) => ($selected || $status === 'available') ? '#fff' : '#1A1814'};
+  border: 1px solid rgba(0,0,0,0.05);
+  font-family: ${({ theme }) => theme.typography.fonts.mono};
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: ${({ $disabled }) => $disabled ? 0.3 : 1};
+  pointer-events: ${({ $disabled }) => $disabled ? 'none' : 'auto'};
+
+  &:hover {
+    transform: scale(1.1);
+    z-index: 10;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  }
+`;
+
 export default function Home({ goLogin }) {
   const [doctors, setDoctors] = useState([]);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
@@ -392,6 +523,9 @@ export default function Home({ goLogin }) {
   const [bookingDate, setBookingDate] = useState("");
   const gridRef = useRef(null);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [userAppointments, setUserAppointments] = useState([]);
+  const [allAppointments, setAllAppointments] = useState([]);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
   
   const timeSlots = ['09:00 AM', '10:30 AM', '01:00 PM', '02:30 PM', '04:00 PM', '05:15 PM'];
   
@@ -457,6 +591,81 @@ export default function Home({ goLogin }) {
     return () => observer.disconnect();
   }, []);
 
+  const loadUserAppointments = async () => {
+    try {
+      const all = await getAppointments();
+      // Filter for patient 1 (placeholder) and non-cancelled status
+      const mine = all.filter(a => a.patient?.id === 1 && a.status !== 'cancelled');
+      setUserAppointments(mine);
+    } catch (err) {
+      console.error("Failed to load appointments", err);
+    }
+  };
+
+  useEffect(() => {
+    loadUserAppointments();
+    getAppointments().then(setAllAppointments).catch(console.error);
+  }, []);
+
+  const getBookedDates = () => {
+    if (!selectedDoctor) return [];
+    return allAppointments
+      .filter(a => a.doctor?.id === selectedDoctor.id && a.status !== 'cancelled')
+      .map(a => new Date(a.date).toDateString());
+  };
+
+  const renderCalendar = () => {
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const bookedDates = getBookedDates();
+    const today = new Date();
+    today.setHours(0,0,0,0);
+
+    const days = [];
+    // Empty slots for previous month
+    for (let i = 0; i < firstDay; i++) {
+      days.push(<div key={`empty-${i}`} />);
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const date = new Date(year, month, d);
+      const isSelected = bookingDate === date.toISOString().split('T')[0];
+      const isBooked = bookedDates.includes(date.toDateString());
+      const isPast = date < today;
+      
+      let status = 'available';
+      if (isBooked) status = 'booked';
+      if (isPast) status = 'past';
+
+      days.push(
+        <CalendarDay 
+          key={d} 
+          $selected={isSelected} 
+          $status={status}
+          $disabled={isPast}
+          onClick={() => setBookingDate(date.toISOString().split('T')[0])}
+        >
+          {d}
+        </CalendarDay>
+      );
+    }
+    return days;
+  };
+
+  const handleCancel = async (id) => {
+    if (!window.confirm("Are you sure you want to cancel this appointment?")) return;
+    try {
+      await cancelAppointment(id);
+      loadUserAppointments();
+      getAppointments().then(setAllAppointments).catch(console.error);
+      alert("Appointment cancelled successfully.");
+    } catch (err) {
+      alert("Failed to cancel appointment.");
+    }
+  };
+
   const handleBookingSubmit = async () => {
     if (!selectedDoctor || !selectedTime || !checkupReason || !bookingDate || !patientName) {
       alert("Please fill in all booking details including your full name.");
@@ -478,6 +687,8 @@ export default function Home({ goLogin }) {
       setCheckupReason("");
       setPatientName("");
       setBookingDate("");
+      loadUserAppointments();
+      getAppointments().then(setAllAppointments).catch(console.error);
     } catch (err) {
       const errorMsg = err.response?.data?.message || "Failed to book appointment. This slot might be taken.";
       alert(errorMsg);
@@ -572,7 +783,7 @@ export default function Home({ goLogin }) {
                   {cleanName.charAt(0).toUpperCase()}
                 </Avatar>
                 <Specialty>Senior Specialist</Specialty>
-                <DoctorName>Dr. {cleanName}</DoctorName>
+                <DoctorName>{formatDrName(doc.fullName)}</DoctorName>
                 <Specialty style={{ color: '#0047FF', marginTop: '4px' }}>{doc.specialty || 'General Practitioner'}</Specialty>
                 <p style={{ marginTop: '1.2rem', fontSize: '12px', lineHeight: '1.6' }}>
                   Providing elite medical consultation and personalized treatment plans for every patient.
@@ -619,12 +830,18 @@ export default function Home({ goLogin }) {
               />
             </InputGroup>
             <InputGroup>
-              <label>Consultation Date</label>
-              <input 
-                type="date" 
-                value={bookingDate}
-                onChange={(e) => setBookingDate(e.target.value)}
-              />
+              <label>Consultation Date (Select on Calendar)</label>
+              <CalendarContainer>
+                <CalendarHeader>
+                  <button onClick={(e) => { e.preventDefault(); setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() - 1))); }}>&lt;</button>
+                  <span>{currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}</span>
+                  <button onClick={(e) => { e.preventDefault(); setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() + 1))); }}>&gt;</button>
+                </CalendarHeader>
+                <CalendarGrid>
+                  {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => <DayLabel key={d}>{d}</DayLabel>)}
+                  {renderCalendar()}
+                </CalendarGrid>
+              </CalendarContainer>
             </InputGroup>
           </div>
 
@@ -651,10 +868,33 @@ export default function Home({ goLogin }) {
             <span>
               {!selectedDoctor ? 'Select a Doctor above' : 
                !selectedTime ? 'Select a Time Slot' : 
-               `Confirm Booking with Dr. ${selectedDoctor.fullName.replace(/^Dr\.\s*/i, '')}`}
+               `Confirm Booking with ${formatDrName(selectedDoctor.fullName)}`}
             </span>
           </Button>
         </ScheduleCard>
+
+        {userAppointments.length > 0 && (
+          <AppointmentListWrapper className="reveal">
+            <SectionLabel style={{ justifyContent: 'center' }}>Your Active Appointments</SectionLabel>
+            <div style={{ marginTop: '2rem' }}>
+              {userAppointments.map((appt) => (
+                <AppointmentItem key={appt.id}>
+                  <ApptInfo>
+                    <ApptDoctor>{formatDrName(appt.doctor?.fullName)}</ApptDoctor>
+                    <ApptDetail>
+                      <span>{new Date(appt.date).toLocaleDateString()}</span>
+                      <span>•</span>
+                      <span>{appt.reason}</span>
+                    </ApptDetail>
+                  </ApptInfo>
+                  <CancelButton onClick={() => handleCancel(appt.id)}>
+                    Cancel Visit
+                  </CancelButton>
+                </AppointmentItem>
+              ))}
+            </div>
+          </AppointmentListWrapper>
+        )}
       </BookingWrapper>
 
       <footer style={{ padding: '4rem 0', borderTop: '1px solid rgba(26,24,20,0.12)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
